@@ -23,8 +23,22 @@ function _build_docker() {
   docker build -t ${APP}:${IMG_VER} "${ROOT}"
 }
 
+function _help() {
+  cat << EOF
+Usage: `basename $0` COMMAND
+
+  r,run               run Qtile in Xephyr
+  i,interactive       run and interactive shell (basb)
+  b,build             build the Docker image
+  h,help,-h,--help    display this help menu
+
+EOF
+}
+
 case "$1" in
   r|run) _run_container "/scripts/xephyr";;
   t|bash) _run_container "bash";;
   b|build) _build_docker;;
+  h|help|-h|--help) _help;;
+  *) echo -e "Unknown command '$1'\n"; _help;;
 esac
