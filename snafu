@@ -1,0 +1,27 @@
+#!/bin/bash
+
+APP="snafu"
+IMG_VER="0.1"
+
+ROOT="`dirname $0`"
+SCRIPTS="${ROOT}/container_scripts"
+
+function _run_container() {
+  docker run --rm -it \
+    -e DISPLAY=$DISPLAY \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
+    -v "${SCRIPTS}":/scripts \
+    --name "${APP}" \
+    snafu:${IMG_VER}
+    "$1"
+}
+
+function _build_docker() {
+  docker build -t ${APP}:${IMG_VER} "${ROOT}"
+}
+
+case "$1" in
+  r|run) _run_container "/scripts/xephyr";;
+  t|bash) _run_container "bash";;
+  b|build) _build_docker;;
+esac

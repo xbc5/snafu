@@ -1,0 +1,93 @@
+#!/bin/bash
+
+# This code is incomplete, so don't use it. It's saved because I will likely
+# use this approach at some point in the future; for now I shall install
+# Qtile via COPR.
+
+echo "Do not use this script"
+exit 1
+
+set -e
+set -o pipefail
+
+APP="snafu"
+SPEC_D="SPEC"
+SPEC_F="qtile-dom0.spec"
+DOM0_PY_VER="3.11.6"
+
+function _install_py() {
+  pyenv install -s "$DOM0_PY_VER"
+  pyenv local "$DOM0_PY_VER"
+}
+
+function _create_venv() {
+  pyenv virtualenv "$DOM0_PY_VER" "$APP"
+}
+
+function _activate_venv() {
+  # this is only active for the current script
+  eval "$(pyenv init -)"
+  pyenv activate "$APP"
+}
+
+function _echo_deps() {
+  case "$1" in
+    fedora) echo python3-cffi python3-cairocffi pango python3-dbus-next python3-xcffib pyp2rpm rpm-build rpmdevtools rpmlint;;
+  esac
+}
+
+function _xclip_deps() {
+  _echo_deps "$1" | xclip -selection clipboard
+  echo -n "Copied to clipboard: "
+  _echo_deps "$1"
+}
+
+function _install_qtile() {
+  pip install --user qtile
+}
+
+function _gen_spec() {
+  local dst="${SPEC_D}/${SPEC_F}"
+  mkdir -p "$SPEC_D"
+  pyp2rpm qtile > "$dst"
+  # sed -i '/^\(Build\)\?Requires:.*\(flake8\|coverage\|pytest\|pep8\|wayland\|pywlroots\|setuptools\|ipykernel\|jupyter\|sphinx\|numpydoc\).*$/d' "$specf"
+}
+
+function _build_rpm() {
+  local trg="${SPEC_D}/${SPEC_F}"
+  rpmlint "$trg"
+  spectool -gR "$trg"
+  rpmbuild -bs "$trg"
+}
+
+# pipefail will swallow an echo from a function that fails
+# This is for input validation for that specific reason; we shall
+# test that the platform is correct before dispatching functions.
+# NOTE: if you need to expand, you need to update this too
+function _valid_os() {
+  case "$1" in
+    fedora) return 0;;
+    *) echo "unknown platform: '$1'"; return 1;;
+  esac
+}
+
+case "$1" in
+  i|init)
+    _install_py
+    _create_venv
+    ;;
+  a|activate)
+    _activate_venv # only active for current script
+    ;;
+  fetch) _install_qtile;;
+  spec) _gen_spec;;
+  build) _build_rpm;;
+  xc|xclip-deps)
+    _valid_os "$2" || exit 1
+    _xclip_deps "$2"
+    ;;
+  *)
+    _install_qtile
+    _gen_spec
+    _build_rpm;;
+esac

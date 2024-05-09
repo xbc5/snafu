@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# MIT: Copyright (c) 2008, Aldo Cortesi. All rights reserved.
+#
+# Copied from: https://github.com/qtile/qtile/blob/a00b17470a863ce3674b2cd8c63b6695961b2a11/scripts/xephyr
+# Adapted to run Xephyr within a docker container
+
+SCREEN_SIZE=${SCREEN_SIZE:-1920x1080}
+XDISPLAY=${XDISPLAY:-:1}
+LOG_LEVEL=${LOG_LEVEL:-INFO}
+APP=${APP:-$(python3 -c "from libqtile.utils import guess_terminal; print(guess_terminal())")}
+if [[ -z $PYTHON ]]; then
+    PYTHON=python3
+fi
+
+Xephyr +extension RANDR -screen ${SCREEN_SIZE} ${XDISPLAY} -ac &
+XEPHYR_PID=$!
+(
+  sleep 1
+  env DISPLAY=${XDISPLAY} QTILE_XEPHYR=1 ${PYTHON} /bin/qtile start -l ${LOG_LEVEL} $@ &
+  QTILE_PID=$!
+  env DISPLAY=${XDISPLAY} ${APP} &
+  wait $QTILE_PID
+  kill $XEPHYR_PID
+)
