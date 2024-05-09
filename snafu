@@ -8,15 +8,26 @@ SCRIPTS="${ROOT}/container_scripts"
 SRC="${ROOT}/src"
 USER="user"
 
+# pass in any args to append to the docker command; these are
+# literal, so if you intent to run a command inside of the container,
+# you may need 'to use quotes'.
 function _run_container() {
-  docker run --rm -it \
-    -e DISPLAY=$DISPLAY \
-    -v /tmp/.X11-unix:/tmp/.X11-unix \
-    -v "${SCRIPTS}":/scripts \
-    -v "${SRC}":"/home/${USER}/.config/qtile" \
-    --name "${APP}" \
+  # passing in "" to run the default CMD causes it to not
+  # execute; instead we need to build the command, then
+  # explicitly exclude it.
+  local cmd=(
+    docker run --rm -it
+    -e DISPLAY=$DISPLAY
+    -v /tmp/.X11-unix:/tmp/.X11-unix
+    -v "${SCRIPTS}":/scripts
+    -v "${SRC}":"/home/${USER}/.config/qtile"
+    --name "${APP}"
     snafu:${IMG_VER}
-    "$1"
+  )
+
+  (( ${#@} > 0 )) && cmd+=($@) # can pass any args
+
+  "${cmd[@]}"
 }
 
 function _build_docker() {
@@ -36,8 +47,8 @@ EOF
 }
 
 case "$1" in
-  r|run) _run_container "/scripts/xephyr";;
-  t|bash) _run_container "bash";;
+  r|run) _run_container;; # default command
+  i|interactive) _run_container "bash";;
   b|build) _build_docker;;
   h|help|-h|--help) _help;;
   *) echo -e "Unknown command '$1'\n"; _help;;

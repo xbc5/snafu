@@ -3,6 +3,8 @@
 #
 # Copied from: https://github.com/qtile/qtile/blob/a00b17470a863ce3674b2cd8c63b6695961b2a11/scripts/xephyr
 # Adapted to run Xephyr within a docker container
+#
+# NOTE: you must REBUILD the Docker image if you modify this
 
 SCREEN_SIZE=${SCREEN_SIZE:-1920x1080}
 XDISPLAY=${XDISPLAY:-:1}
