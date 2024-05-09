@@ -3,14 +3,17 @@
 APP="snafu"
 IMG_VER="0.1"
 
-ROOT="`dirname $0`"
+ROOT="$(realpath `dirname $0`)"
 SCRIPTS="${ROOT}/container_scripts"
+SRC="${ROOT}/src"
+USER="user"
 
 function _run_container() {
   docker run --rm -it \
     -e DISPLAY=$DISPLAY \
     -v /tmp/.X11-unix:/tmp/.X11-unix \
     -v "${SCRIPTS}":/scripts \
+    -v "${SRC}":"/home/${USER}/.config/qtile" \
     --name "${APP}" \
     snafu:${IMG_VER}
     "$1"
